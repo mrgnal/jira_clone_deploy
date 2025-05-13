@@ -190,7 +190,7 @@ export async function PATCH(req: NextRequest) {
 
   if (!validated.success) {
     // eslint-disable-next-line
-    const message = "Invalid body. " + validated.error.errors[0]?.message ?? "";
+    const message = "Invalid body. " + (validated.error.errors[0]?.message ?? "");
     return new Response(message, { status: 400 });
   }
 

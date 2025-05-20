@@ -1,5 +1,7 @@
 pipeline{
-    agent any
+    agent {
+        label 'agent1'
+    }
 
     environment {
         BUILD_DIR = 'build'

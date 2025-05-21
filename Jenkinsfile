@@ -6,6 +6,12 @@ pipeline{
     environment {
         BUILD_DIR = 'build'
         ZIP_NAME = "release-${env.BUILD_NUMBER}.zip"
+
+        DATABASE_URL = credentials('DATABASE_URL')
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=credentials('DATABASE_URLNEXT_PUBLIC_CLERK_PUBLISHABLE_KEY')
+        CLERK_SECRET_KEY=credentials('CLERK_SECRET_KEY')
+        UPSTASH_REDIS_REST_URL=credentials('UPSTASH_REDIS_REST_URL')
+        UPSTASH_REDIS_REST_TOKEN=credentials('UPSTASH_REDIS_REST_TOKEN')
     }
 
     stages {

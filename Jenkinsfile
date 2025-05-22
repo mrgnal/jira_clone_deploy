@@ -41,7 +41,7 @@ pipeline{
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                sh 'SKIP_ENV_VALIDATION=true npm run build'
             }
         }
 

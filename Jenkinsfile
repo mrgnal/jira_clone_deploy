@@ -9,6 +9,7 @@ pipeline{
         string(name: 'CLERK_SECRET_KEY', defaultValue: 'fake', description: 'Clerk private key')
         string(name: 'UPSTASH_REDIS_REST_URL', defaultValue: 'https://fake', description: 'Reddis url')
         string(name: 'UPSTASH_REDIS_REST_TOKEN', defaultValue: 'fake', description: 'Reddis token')
+        string(name: 'NODE_ENV', defaultValue:'development', description:'Enviroment')
     }
 
     environment {
@@ -41,7 +42,7 @@ pipeline{
 
         stage('Build') {
             steps {
-                sh 'SKIP_ENV_VALIDATION=true npm run build'
+                sh 'npm run build'
             }
         }
 

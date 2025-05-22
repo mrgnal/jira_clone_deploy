@@ -7,15 +7,10 @@ export type GetProjectResponse = {
 };
 
 export async function GET() {
-  if (process.env.SKIP_BUILD_PRISMA === "true") {
-    return NextResponse.json({ project: null });
-  }
-
   const project = await prisma.project.findUnique({
     where: {
       key: "JIRA-CLONE",
     },
   });
-
   return NextResponse.json({ project });
 }

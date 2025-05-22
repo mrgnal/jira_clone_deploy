@@ -33,12 +33,6 @@ pipeline{
             }
         }
 
-        stage('Start app'){
-            steps {
-                sh 'npm run start'
-            }
-        }
-
         stage('Test'){
             steps{
                 sh 'npm run test'

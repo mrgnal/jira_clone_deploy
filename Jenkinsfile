@@ -3,7 +3,7 @@ pipeline{
         label 'agent1'
     }
     
-    parametrs {
+    parameters  {
         string(name: 'DATABASE_URL', defaultValue: 'postgres://fake', description: 'Database Url')
         string(name: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', defaultValue: 'fake', description: 'Clerk public key')
         string(name: 'CLERK_SECRET_KEY', defaultValue: 'fake', description: 'Clerk private key')

@@ -2,16 +2,24 @@ pipeline{
     agent {
         label 'agent1'
     }
+    
+    parametrs {
+        string(name: 'DATABASE_URL', defaultValue: 'postgres://fake', description: 'Database Url')
+        string(name: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', defaultValue: 'fake', description: 'Clerk public key')
+        string(name: 'CLERK_SECRET_KEY', defaultValue: 'fake', description: 'Clerk private key')
+        string(name: 'UPSTASH_REDIS_REST_URL', defaultValue: 'https://fake', description: 'Reddis url')
+        string(name: 'UPSTASH_REDIS_REST_TOKEN', defaultValue: 'fake', description: 'Reddis token')
+    }
 
     environment {
         BUILD_DIR = 'build'
         ZIP_NAME = "release-${env.BUILD_NUMBER}.zip"
 
-        DATABASE_URL = credentials('DATABASE_URL')
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=credentials('DATABASE_URLNEXT_PUBLIC_CLERK_PUBLISHABLE_KEY')
-        CLERK_SECRET_KEY=credentials('CLERK_SECRET_KEY')
-        UPSTASH_REDIS_REST_URL=credentials('UPSTASH_REDIS_REST_URL')
-        UPSTASH_REDIS_REST_TOKEN=credentials('UPSTASH_REDIS_REST_TOKEN')
+        DATABASE_URL = "${params.DATABASE_URL}"
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="${params.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}"
+        CLERK_SECRET_KEY="${params.CLERK_SECRET_KEY}"
+        UPSTASH_REDIS_REST_URL="${params.UPSTASH_REDIS_REST_URL}"
+        UPSTASH_REDIS_REST_TOKEN="${params.UPSTASH_REDIS_REST_TOKEN}"
     }
 
     stages {
@@ -31,11 +39,11 @@ pipeline{
             }
         }
 
-        // stage('Test'){
-        //     steps{
-        //         sh 'npm run test'
-        //     }
-        // }
+        stage('Test'){
+            steps{
+                sh 'npm run test'
+            }
+        }
 
         stage('Build') {
             steps {

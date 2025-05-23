@@ -4,12 +4,12 @@ pipeline{
     }
     
     parameters  {
-        string(name: 'DATABASE_URL', defaultValue: 'postgres://fake', description: 'Database Url')
+        string(name: 'DATABASE_URL', defaultValue: 'file:./test.db', description: 'Database Url')
         string(name: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', defaultValue: 'fake', description: 'Clerk public key')
         string(name: 'CLERK_SECRET_KEY', defaultValue: 'fake', description: 'Clerk private key')
         string(name: 'UPSTASH_REDIS_REST_URL', defaultValue: 'https://fake', description: 'Reddis url')
         string(name: 'UPSTASH_REDIS_REST_TOKEN', defaultValue: 'fake', description: 'Reddis token')
-        string(name: 'NODE_ENV', defaultValue:'development', description:'Enviroment')
+        string(name: 'NODE_ENV', defaultValue:'test', description:'Enviroment')
     }
 
     environment {
@@ -42,7 +42,7 @@ pipeline{
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                sh 'npm run build --schema=schema.test.prisma'
             }
         }
 

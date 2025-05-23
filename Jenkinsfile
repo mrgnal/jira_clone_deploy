@@ -41,8 +41,15 @@ pipeline{
         }
 
         stage('Build') {
-            steps {
-                sh 'npm run build --schema=schema.test.prisma'
+             steps {
+                echo 'Generating Prisma Client for SQLite...'
+                sh 'npm run generate:test'
+
+                echo 'Building app...'
+                sh 'npm run build'
+
+                echo 'Re-generating Prisma Client for production (PostgreSQL)...'
+                sh 'npm run generate'
             }
         }
 

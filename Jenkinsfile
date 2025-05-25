@@ -88,7 +88,7 @@ pipeline{
 
         stage('Archive') {
             steps {
-                sh "zip -r ${env.ZIP_NAME} ${env.BUILD_DIR}"
+                sh "zip -r ${env.ZIP_NAME} ."
                 archiveArtifacts artifacts: "${env.ZIP_NAME}", fingerprint: true
             }
         }
@@ -97,7 +97,7 @@ pipeline{
     post{
         success{
             echo 'Pipeline finnished sccessfully'
-        }
+        } 
         failure{
             echo 'Pipeline failed'
         }

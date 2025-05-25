@@ -17,7 +17,7 @@ pipeline{
     }
 
     environment {
-        BUILD_DIR = 'build'
+        BUILD_DIR = './build'
         ZIP_NAME = "release-${BUILD_NUMBER}.zip"
 
         DATABASE_URL = "postgresql://${params.DB_USER}:${params.DB_PASSWORD}@${params.DB_HOST}:${params.DB_PORT}/${params.DB_NAME}"

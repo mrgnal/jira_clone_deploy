@@ -42,7 +42,7 @@ pipeline{
         stage('Set up docker database'){
             steps{
                 sh """
-                docker run -d \
+                sudo docker run -d \
                 --name pg_test \
                 -p ${params.DB_PORT}:5432 \
                 -e POSTGRES_USER=${params.DB_USER} \

@@ -56,7 +56,7 @@ pipeline{
         stage('Waiting for database'){
             steps{
                 sh """
-                until docker exec pg_test pg_isready -U ${params.DB_USER}; do
+                until sudo docker exec pg_test pg_isready -U ${params.DB_USER}; do
                 echo "Waiting for Postgres..."; sleep 1;
                 done
                 """

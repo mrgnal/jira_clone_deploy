@@ -102,8 +102,8 @@ pipeline{
             echo 'Pipeline failed'
         }
         always{
-            sh 'docker stop pg_test || true'
-            sh 'docker rm pg_test || true'
+            sh 'sudo docker stop pg_test || true'
+            sh 'sudo docker rm pg_test || true'
         }
     }
 

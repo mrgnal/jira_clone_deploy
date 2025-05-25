@@ -4,7 +4,11 @@ pipeline{
     }
     
     parameters  {
-        string(name: 'DATABASE_URL', defaultValue: 'file:./test.db', description: 'Database Url')
+        string(name: 'DB_NAME', defaultValue: 'test_db', description: 'Test database name')
+        string(name: 'DB_USER', defaultValue: 'user', description: 'Test database user')
+        string(name: 'DB_PASSWORD', defaultValue: 'password', description: 'Test database password')
+        string(name: 'DB_HOST', defaultValue: 'localhost', description: 'Database host')
+        string(name: 'DB_PORT', defaultValue: '5432', description: 'Database port')
         string(name: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', defaultValue: 'fake', description: 'Clerk public key')
         string(name: 'CLERK_SECRET_KEY', defaultValue: 'fake', description: 'Clerk private key')
         string(name: 'UPSTASH_REDIS_REST_URL', defaultValue: 'https://fake', description: 'Reddis url')
@@ -14,9 +18,9 @@ pipeline{
 
     environment {
         BUILD_DIR = 'build'
-        ZIP_NAME = "release-${env.BUILD_NUMBER}.zip"
+        ZIP_NAME = "release-${BUILD_NUMBER}.zip"
 
-        DATABASE_URL = "${params.DATABASE_URL}"
+        DATABASE_URL = "postgresql://${params.DB_USER}:${params.DB_PASSWORD}@${params.DB_HOST}:${params.DB_PORT}/${params.DB_NAME}"
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="${params.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}"
         CLERK_SECRET_KEY="${params.CLERK_SECRET_KEY}"
         UPSTASH_REDIS_REST_URL="${params.UPSTASH_REDIS_REST_URL}"
@@ -28,9 +32,44 @@ pipeline{
         steps {
                 echo 'Setting dependencies'
                 sh 'npm install'
+                sh 'npm install ts-node typescript'
 
                 echo 'Start lint'
                 sh 'npm run lint'
+            }
+        }
+
+        stage('Set up docker database'){
+            steps{
+                sh """
+                docker run -d \
+                --name pg_test \
+                -p ${params.DB_PORT}:5432 \
+                -e POSTGRES_USER=${params.DB_USER} \
+                -e POSTGRES_PASSWORD=${params.DB_PASSWORD} \
+                -e POSTGRES_DB=${params.DB_NAME} \
+                postgres:latest
+                """
+            }
+        }
+
+        stage('Waiting for database'){
+            steps{
+                sh """
+                until docker exec pg_test pg_isready -U ${params.DB_USER}; do
+                echo "Waiting for Postgres..."; sleep 1;
+                done
+                """
+            }
+        }
+
+        stage('Apply migrations'){
+            steps{
+                echo "Apply deploy migrate"
+                sh 'npx prisma migrate deploy'
+
+                echo "Apply seed migrate"
+                sh 'npx prisma db seed'
             }
         }
 
@@ -42,14 +81,8 @@ pipeline{
 
         stage('Build') {
              steps {
-                echo 'Generating Prisma Client for SQLite...'
-                sh 'npm run generate:test'
-
-                echo 'Building app...'
+                echo 'Building app'
                 sh 'npm run build'
-
-                echo 'Re-generating Prisma Client for production (PostgreSQL)...'
-                sh 'npm run generate'
             }
         }
 
@@ -68,7 +101,10 @@ pipeline{
         failure{
             echo 'Pipeline failed'
         }
-
+        always{
+            sh 'docker stop pg_test || true'
+            sh 'docker rm pg_test || true'
+        }
     }
 
 }

@@ -14,10 +14,16 @@ pipeline{
         SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
         AWS_CREDENTIALS_ID='AWS_CREDENTIALS_ID'
         APP_NAME = 'jira-clone'
-        TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
 
     stages {
+        stage('Set tag') {
+            steps {
+                script {
+                    env.TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                }
+            }
+        }
         stage('Setting dependencies'){
             steps{
                 sh 'npm install'

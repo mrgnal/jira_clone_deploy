@@ -43,10 +43,9 @@ pipeline{
             }
         }
 
-        stage('Build docker image')
-        {
+        stage('Build docker image'){
             steps{
-                sh 'make ecr-build'
+                sh 'sudo make ecr-build'
             }
         }
 

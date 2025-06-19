@@ -1,6 +1,8 @@
-APP_NAME=jira-clone
 
-.PHONY: build build-migrate run-migrate 
+APP_NAME=jira-clone
+TAG ?= $(git rev-parse --short HEAD)
+
+git rev-parse HEAD.PHONY: build build-migrate run-migrate 
 
 build:
 	docker build -f Dockerfile -t ${APP_NAME}:latest .
@@ -10,3 +12,6 @@ build-migrate:
 
 run-migrate:
 	docker run --rm --env-file .env ${APP_NAME}-migrate:latest
+
+ecr-build:
+	docker build -f Dockerfile -t $(APP_NAME):$(TAG) .

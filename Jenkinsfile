@@ -4,34 +4,29 @@ pipeline{
     }
     
     parameters  {
-        string(name: 'DATABASE_URL', defaultValue: 'postgresql://fake', description: 'Database Url')
-        string(name: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', defaultValue: 'fake', description: 'Clerk public key')
-        string(name: 'CLERK_SECRET_KEY', defaultValue: 'fake', description: 'Clerk private key')
-        string(name: 'UPSTASH_REDIS_REST_URL', defaultValue: 'https://fake', description: 'Reddis url')
-        string(name: 'UPSTASH_REDIS_REST_TOKEN', defaultValue: 'fake', description: 'Reddis token')
-
         string(name: 'NODE_ENV', defaultValue:'test', description:'Enviroment')
+        string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
 
     }
 
     environment {
         NODE_ENV = "${params.NODE_ENV}"
-
-        DATABASE_URL = "${params.DATABASE_URL}"
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="${params.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}"
-        CLERK_SECRET_KEY="${params.CLERK_SECRET_KEY}"
-        UPSTASH_REDIS_REST_URL="${params.UPSTASH_REDIS_REST_URL}"
-        UPSTASH_REDIS_REST_TOKEN="${params.UPSTASH_REDIS_REST_TOKEN}"
+        SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
+        AWS_CREDENTIALS_ID='AWS_CREDENTIALS_ID'
+        APP_NAME = 'jira-clone'
+        TAG = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
 
     stages {
-        stage('Lint') {
-        steps {
-                echo 'Setting dependencies'
+        stage('Setting dependencies'){
+            steps{
                 sh 'npm install'
                 sh 'npm install ts-node typescript'
+            }
+        }
 
-                echo 'Start lint'
+        stage('Lint') {
+        steps {
                 sh 'npm run lint'
             }
         }
@@ -41,9 +36,43 @@ pipeline{
                 sh 'npm run test'
             }
         }
+
+        stage('Build docker image')
+        {
+            {
+                sh 'make ecr-build'
+            }
+        }
+
+        stage('Docker login to ECR') {
+            steps {
+                withAWS(credentials: "${env.AWS_CREDENTIALS_ID}", region: "${env.AWS_REGION}") {
+                    script {
+                        sh '''
+                            aws ecr get-login-password --region $AWS_REGION | \
+                            docker login --username AWS --password-stdin $ECR_REGISTRY
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Push docker image to ECR') {
+            steps {
+                script {
+                    sh '''
+                        docker tag ${APP_NAME}:${TAG} ${ECR_REPO}:${TAG}
+                        docker push ${ECR_REPO}:${TAG}
+                    '''
+                }
+            }
+        }
     }
 
     post{
+        always {
+            cleanWs()
+        }
         success{
             echo 'Pipeline finnished sccessfully'
         } 

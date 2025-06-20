@@ -1,36 +1,36 @@
-def image 
-
-pipeline {
-    agent { label 'agent1' }
-
-    parameters {
-        string(name: 'NODE_ENV', defaultValue:'production', description:'Enviroment')
+pipeline{
+    agent {
+        label 'agent1'
+    }
+    
+    parameters  {
+        string(name: 'NODE_ENV', defaultValue:'test', description:'Enviroment')
         string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
     }
 
     environment {
         NODE_ENV = "${params.NODE_ENV}"
         SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
-        AWS_CREDENTIALS_ID = 'jenkins-ecr-access'
+        AWS_CREDENTIALS_ID='jenkins-ecr-access'
         APP_NAME = 'jira_clone'
     }
 
     stages {
-        stage('Setting dependencies') {
-            steps {
+        stage('Setting dependencies'){
+            steps{
                 sh 'npm install'
                 sh 'npm install ts-node typescript'
             }
         }
 
         stage('Lint') {
-            steps {
+        steps {
                 sh 'npm run lint'
             }
         }
 
-        stage('Test') {
-            steps {
+        stage('Test'){
+            steps{
                 sh 'npm run test'
             }
         }
@@ -44,8 +44,8 @@ pipeline {
             }
         }
 
-        stage('Build docker image') {
-            steps {
+        stage('Build docker image'){
+            steps{
                 script {
                     image = docker.build("${env.APP_NAME}:${env.GIT_HASH}")
                     image.tag('latest')
@@ -56,30 +56,33 @@ pipeline {
             }
         }
 
+
+
         stage('Push docker image to ECR') {
             steps {
                 script {
-                    echo "Pushing Docker image with tags: ${env.GIT_HASH}, latest, ${env.BUILD_NUMBER}, ${env.NODE_ENV}-${env.GIT_HASH}, ${env.DATE}"
                     docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
                         image.push(env.GIT_HASH)
                         image.push('latest')
+                        image.push(env.GIT_HASH)
                         image.push("${env.NODE_ENV}-${env.BUILD_NUMBER}")
                         image.push(env.DATE)
-                    }
+                }
                 }
             }
         }
     }
 
-    post {
+    post{
         always {
             cleanWs()
         }
-        success {
-            echo 'Pipeline finished successfully'
-        }
-        failure {
+        success{
+            echo 'Pipeline finnished sccessfully'
+        } 
+        failure{
             echo 'Pipeline failed'
         }
     }
+
 }

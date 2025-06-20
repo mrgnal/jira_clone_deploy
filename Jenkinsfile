@@ -47,7 +47,7 @@ pipeline{
         stage('Build docker image'){
             steps{
                 script {
-                    image = docker.build("${FULL_IMAGE_NAME}:${env.TAG}")
+                    image = docker.build("${env.APP_NAME}:${env.TAG}")
                     image.tag('latest')
                 }
                 // sh "sudo docker build -f Dockerfile -t ${env.APP_NAME}:${env.} ."

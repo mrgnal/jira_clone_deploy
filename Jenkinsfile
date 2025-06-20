@@ -46,31 +46,40 @@ pipeline{
 
         stage('Build docker image'){
             steps{
-                sh "sudo docker build -f Dockerfile -t ${env.APP_NAME}:${env.TAG} ."
+                script {
+                    image = docker.build("${FULL_IMAGE_NAME}:${env.TAG}")
+                    image.tag('latest')
+                }
+                // sh "sudo docker build -f Dockerfile -t ${env.APP_NAME}:${env.} ."
             }
         }
 
-        stage('Docker login to ECR') {
-            steps {
-                withAWS(credentials: "${env.AWS_CREDENTIALS_ID}", region: "${env.AWS_REGION}") {
-                    script {
-                        sh '''
-                            aws ecr get-login-password --region $AWS_REGION | \
-                            docker login --username AWS --password-stdin $ECR_REGISTRY
-                        '''
-                    }
-                }
-            }
-        }
+        // stage('Docker login to ECR') {
+        //     steps {
+        //         withAWS(credentials: "${env.AWS_CREDENTIALS_ID}", region: "${env.AWS_REGION}") {
+        //             script {
+        //                 sh '''
+        //                     aws ecr get-login-password --region $AWS_REGION | \
+        //                     docker login --username AWS --password-stdin $ECR_REGISTRY
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Push docker image to ECR') {
             steps {
                 script {
-                    sh '''
-                        docker tag ${APP_NAME}:${TAG} ${ECR_REPO}:${TAG}
-                        docker push ${ECR_REPO}:${TAG}
-                    '''
+                    docker.withRegistry("${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
+                        image.push(env.TAG)
+                        image.push('latest')
                 }
+                // script {
+                //     sh '''
+                //         docker tag ${APP_NAME}:${TAG} ${ECR_REPO}:${TAG}
+                //         docker push ${ECR_REPO}:${TAG}
+                //     '''
+                // }
             }
         }
     }

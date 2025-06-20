@@ -27,10 +27,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV SKIP_ENV_VALIDATION=true
-
 # Generate prisma
 RUN npx prisma generate
+
+ENV UPSTASH_REDIS_REST_URL=http://fake
+ENV UPSTASH_REDIS_REST_TOKEN=123456
+ENV SKIP_ENV_VALIDATION=true
 
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \

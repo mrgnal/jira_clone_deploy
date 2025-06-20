@@ -49,8 +49,8 @@ pipeline {
                 script {
                     image = docker.build("${env.APP_NAME}:${env.GIT_HASH}")
                     image.tag('latest')
-                    image.tag(env.BUILD_NUMBER)
-                    image.tag("${env.NODE_ENV}-${env.GIT_HASH}")
+                    image.tag(env.GIT_HASH)
+                    image.tag("${env.NODE_ENV}-${env.BUILD_NUMBER}")
                     image.tag(env.DATE)
                 }
             }
@@ -63,8 +63,7 @@ pipeline {
                     docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
                         image.push(env.GIT_HASH)
                         image.push('latest')
-                        image.push(env.BUILD_NUMBER)
-                        image.push("${env.NODE_ENV}-${env.GIT_HASH}")
+                        image.push("${env.NODE_ENV}-${env.BUILD_NUMBER}")
                         image.push(env.DATE)
                     }
                 }

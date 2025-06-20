@@ -74,6 +74,7 @@ pipeline{
                         image.push(env.TAG)
                         image.push('latest')
                 }
+                }
                 // script {
                 //     sh '''
                 //         docker tag ${APP_NAME}:${TAG} ${ECR_REPO}:${TAG}

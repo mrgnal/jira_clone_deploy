@@ -12,7 +12,7 @@ pipeline{
     environment {
         NODE_ENV = "${params.NODE_ENV}"
         SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
-        AWS_CREDENTIALS_ID='AWS_CREDENTIALS_ID'
+        AWS_CREDENTIALS_ID='jenkins-ecr-access'
         APP_NAME = 'jira-clone'
         TAG='latest'
     }

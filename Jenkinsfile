@@ -14,6 +14,7 @@ pipeline{
         SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
         AWS_CREDENTIALS_ID='AWS_CREDENTIALS_ID'
         APP_NAME = 'jira-clone'
+        TAG='latest'
     }
 
     stages {

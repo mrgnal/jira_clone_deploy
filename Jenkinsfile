@@ -46,7 +46,7 @@ pipeline{
 
         stage('Build docker image'){
             steps{
-                sh 'sudo make ecr-build TAG=${env.TAG}'
+                sh "sudo docker build -f Dockerfile -t ${env.APP_NAME}:${env.TAG} ."
             }
         }
 

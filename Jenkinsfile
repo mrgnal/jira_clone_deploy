@@ -37,13 +37,12 @@ pipeline {
 
 
     stage('Code Analysis') {
-    steps {
       parallel {
-        stage('Lint') {
-          steps {
-            sh 'npm run lint'
-          }
+      stage('Lint') {
+        steps {
+          sh 'npm run lint'
         }
+      }
 
       stage('SonarQube Analysis') {
         steps {
@@ -64,7 +63,6 @@ pipeline {
             failOnIssues: false
           )
         }
-      }
       }
     }
     }

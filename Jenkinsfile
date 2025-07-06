@@ -33,16 +33,7 @@ pipeline {
                 }
                 stage('Security & Quality Analysis') {
                     stages {
-                        stage('Snyk test') {
-                            steps {
-                                snykSecurity(
-                                    snykInstallation: 'snyk',
-                                    snykTokenId: 'snyk',
-                                    failOnIssues: false
-                                )
-                            }
-                        }
-                        stage('SonarQube Analysis') {
+                          stage('SonarQube Analysis') {
                             steps {
                                 script {
                                     def scannerHome = tool 'sonarqube'
@@ -50,6 +41,15 @@ pipeline {
                                         sh "${scannerHome}/bin/sonar-scanner"
                                     }
                                 }
+                            }
+                        }
+                        stage('Snyk test') {
+                            steps {
+                                snykSecurity(
+                                    snykInstallation: 'snyk',
+                                    snykTokenId: 'snyk',
+                                    failOnIssues: false
+                                )
                             }
                         }
                     }

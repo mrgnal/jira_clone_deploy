@@ -34,7 +34,8 @@ pipeline {
         sh 'npm run lint'
       }
     }
-
+    paralel('Code Analysis')
+    {
     stage('Test') {
       steps {
         sh 'npm run test'
@@ -61,7 +62,8 @@ pipeline {
         )
       }
     }
-
+    }
+    
     stage('Set tags') {
       steps {
         script {

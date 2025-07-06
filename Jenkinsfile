@@ -4,7 +4,7 @@ pipeline {
   }
 
   parameters  {
-    string(name: 'NODE_ENV', defaultValue:'production', description:'Enviroment')
+    string(name: 'NODE_ENV', defaultValue:'test', description:'Enviroment')
     string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
   }
 
@@ -45,7 +45,7 @@ pipeline {
       steps {
         script {
           def scannerHome = tool 'sonarqube'
-          withSonarQubeEnv('SonarQube') {
+          withSonarQubeEnv('sonarqube') {
             sh "${scannerHome}/bin/sonar-scanner"
           }
         }

@@ -36,57 +36,57 @@ pipeline {
     }
 
 
-    // stage('Test') {
-    //   steps {
-    //     sh 'npm run test'
-    //   }
-    // }
+    stage('Test') {
+      steps {
+        sh 'npm run test'
+      }
+    }
 
-    // stage('SonarQube Analysis') {
-    //   steps {
-    //     script {
-    //       def scannerHome = tool 'sonarqube'
-    //       withSonarQubeEnv('sonarqube') {
-    //         sh "${scannerHome}/bin/sonar-scanner"
-    //       }
-    //     }
-    //   }
-
-    // }
-
-    // stage('Snyk test') {
-    //   steps {
-    //     snykSecurity(
-    //       snykInstallation: 'snyk',
-    //       snykTokenId: 'snyk',
-    //       failOnIssues: false
-    //     )
-    //   }
-    // }
-    stage('Code Analysis') {
-    steps {
-        parallel (
-        "Test": {
-            sh 'npm run test'
-        },
-        "SonarQube Analysis": {
-            script {
-            def scannerHome = tool 'sonarqube'
-            withSonarQubeEnv('sonarqube') {
-                sh "${scannerHome}/bin/sonar-scanner"
-            }
-            }
-        },
-        "Snyk test": {
-            snykSecurity(
-            snykInstallation: 'snyk',
-            snykTokenId: 'snyk',
-            failOnIssues: false
-            )
+    stage('SonarQube Analysis') {
+      steps {
+        script {
+          def scannerHome = tool 'sonarqube'
+          withSonarQubeEnv('sonarqube') {
+            sh "${scannerHome}/bin/sonar-scanner"
+          }
         }
+      }
+
+    }
+
+    stage('Snyk test') {
+      steps {
+        snykSecurity(
+          snykInstallation: 'snyk',
+          snykTokenId: 'snyk',
+          failOnIssues: false
         )
+      }
     }
-    }
+    // stage('Code Analysis') {
+    // steps {
+    //     parallel (
+    //     "Test": {
+    //         sh 'npm run test'
+    //     },
+    //     "SonarQube Analysis": {
+    //         script {
+    //         def scannerHome = tool 'sonarqube'
+    //         withSonarQubeEnv('sonarqube') {
+    //             sh "${scannerHome}/bin/sonar-scanner"
+    //         }
+    //         }
+    //     },
+    //     "Snyk test": {
+    //         snykSecurity(
+    //         snykInstallation: 'snyk',
+    //         snykTokenId: 'snyk',
+    //         failOnIssues: false
+    //         )
+    //     }
+    //     )
+    // }
+    // }
 
 
     stage('Set tags') {

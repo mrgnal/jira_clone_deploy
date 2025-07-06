@@ -34,7 +34,9 @@ pipeline {
         sh 'npm run lint'
       }
     }
-    paralel('Code Analysis')
+    
+    stage('Code Analysis'){
+    paralel
     {
     stage('Test') {
       steps {
@@ -52,7 +54,7 @@ pipeline {
         }
       }
     }
-
+    }
     stage('Snyk test') {
       steps {
         snykSecurity(
@@ -63,7 +65,7 @@ pipeline {
       }
     }
     }
-    
+
     stage('Set tags') {
       steps {
         script {

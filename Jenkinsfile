@@ -52,6 +52,15 @@ pipeline {
       }
     }
 
+    stage('Snyk test') {
+      steps {
+        snykSecurity(
+          snykInstallation: 'snyk',
+          snykTokenId: 'snyk',
+        )
+      }
+    }
+
     stage('Set tags') {
       steps {
         script {

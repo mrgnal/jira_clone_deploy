@@ -1,147 +1,107 @@
 pipeline {
-  agent {
-    label 'agent1'
-  }
-
-  parameters  {
-    string(name: 'NODE_ENV', defaultValue:'test', description:'Enviroment')
-    string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
-  }
-
-  environment {
-    NODE_ENV = "${params.NODE_ENV}"
-    SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
-    AWS_CREDENTIALS_ID = 'jenkins-ecr-access'
-    APP_NAME = 'jira_clone'
-  }
-
-  stages {
-    stage('SCM') {
-      steps {
-        checkout scm
-      }
+    agent {
+        label 'agent1'
     }
-
-    stage('Setting dependencies') {
-      steps {
-        sh 'npm install'
-        sh 'npm install ts-node typescript'
-      }
+    parameters {
+        string(name: 'NODE_ENV', defaultValue:'test', description:'Environment')
+        string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
     }
-
-    // stage('Lint') {
-    //   steps {
-    //     sh 'npm run lint'
-    //   }
-    // }
-
-
-    stage('Code Analysis') {
-      parallel {
-      stage('Lint') {
-        steps {
-          sh 'npm run lint'
-        }
-      }
-
-      stage('SonarQube Analysis') {
-        steps {
-          script {
-            def scannerHome = tool 'sonarqube'
-            withSonarQubeEnv('sonarqube') {
-              sh "${scannerHome}/bin/sonar-scanner"
+    environment {
+        NODE_ENV = "${params.NODE_ENV}"
+        SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
+        AWS_CREDENTIALS_ID = 'jenkins-ecr-access'
+        APP_NAME = 'jira_clone'
+    }
+    stages {
+        stage('SCM') {
+            steps {
+                checkout scm
             }
-          }
         }
-      }
-      
-      stage('Snyk test') {
-        steps {
-          snykSecurity(
-            snykInstallation: 'snyk',
-            snykTokenId: 'snyk',
-            failOnIssues: false
-          )
+        stage('Setting dependencies') {
+            steps {
+                sh 'npm install'
+                sh 'npm install ts-node typescript'
+            }
         }
-      }
-    }
-    }
-
-
-    //  stage('SonarQube Analysis') {
-    //   steps {
-    //     script {
-    //       def scannerHome = tool 'sonarqube'
-    //       withSonarQubeEnv('sonarqube') {
-    //         sh "${scannerHome}/bin/sonar-scanner"
-    //       }
-    //     }
-    //   }
-    // }
-
-    // stage('Snyk test') {
-    //   steps {
-    //     snykSecurity(
-    //       snykInstallation: 'snyk',
-    //       snykTokenId: 'snyk',
-    //       failOnIssues: false
-    //     )
-    //   }
-    // }
-
-    stage('Test') {
-      steps {
-        sh 'npm run test'
-      }
-    }
-
-   
-
-
-    stage('Set tags') {
-      steps {
-        script {
-          env.GIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-          env.DATE = sh(script: 'date +%Y%m%d-%H%M', returnStdout: true).trim()
+        stage('Code Analysis') {
+            parallel {
+                stage('Lint') {
+                    steps {
+                        sh 'npm run lint'
+                    }
+                }
+                stage('Security & Quality Analysis') {
+                    stages {
+                        stage('Snyk test') {
+                            steps {
+                                snykSecurity(
+                                    snykInstallation: 'snyk',
+                                    snykTokenId: 'snyk',
+                                    failOnIssues: false
+                                )
+                            }
+                        }
+                        stage('SonarQube Analysis') {
+                            steps {
+                                script {
+                                    def scannerHome = tool 'sonarqube'
+                                    withSonarQubeEnv('sonarqube') {
+                                        sh "${scannerHome}/bin/sonar-scanner"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
-    }
-
-    stage('Build docker image') {
-      steps {
-        script {
-          image = docker.build("${env.APP_NAME}:${env.GIT_HASH}")
-          image.tag('latest')
-          image.tag(env.GIT_HASH)
-          image.tag("${env.NODE_ENV}-${env.BUILD_NUMBER}")
-          image.tag(env.DATE)
+        stage('Test') {
+            steps {
+                sh 'npm run test'
+            }
         }
-      }
-    }
-
-    stage('Push docker image to ECR') {
-      steps {
-        script {
-          docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
-            image.push(env.GIT_HASH)
-            image.push('latest')
-            image.push("${env.NODE_ENV}-${env.BUILD_NUMBER}")
-            image.push(env.DATE)
-          }
+        stage('Set tags') {
+            steps {
+                script {
+                    env.GIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    env.DATE = sh(script: 'date +%Y%m%d-%H%M', returnStdout: true).trim()
+                }
+            }
         }
-      }
+        stage('Build docker image') {
+            steps {
+                script {
+                    image = docker.build("${env.APP_NAME}:${env.GIT_HASH}")
+                    image.tag('latest')
+                    image.tag(env.GIT_HASH)
+                    image.tag("${env.NODE_ENV}-${env.BUILD_NUMBER}")
+                    image.tag(env.DATE)
+                }
+            }
+        }
+        stage('Push docker image to ECR') {
+            steps {
+                script {
+                    docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
+                        image.push(env.GIT_HASH)
+                        image.push('latest')
+                        image.push("${env.NODE_ENV}-${env.BUILD_NUMBER}")
+                        image.push(env.DATE)
+                    }
+                }
+            }
+        }
     }
-  }
-
-  post {
-    always {
-      cleanWs()
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline finished successfully'
+        }
+        failure {
+            echo 'Pipeline failed'
+        }
     }
-    success {
-      echo 'Pipeline finished successfully'
-    } 
-    failure {
-      echo 'Pipeline failed'
-    }
-  }
 }

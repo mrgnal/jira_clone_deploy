@@ -2,7 +2,7 @@
 APP_NAME=jira-clone
 TAG ?= $(git rev-parse --short HEAD)
 
-git rev-parse HEAD.PHONY: build build-migrate run-migrate 
+.PHONY: build build-migrate run-migrate 
 
 build:
 	docker build -f Dockerfile -t ${APP_NAME}:latest .

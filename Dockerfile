@@ -42,7 +42,7 @@ RUN \
   fi
 
 
-# Create image
+# Create runner 
 FROM base AS runner
 WORKDIR /app
 

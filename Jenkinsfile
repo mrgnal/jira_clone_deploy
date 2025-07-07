@@ -67,12 +67,10 @@ pipeline {
                                     }catch(err){
                                         echo "Snyk error: ${err}"
 
-                                        archiveArtifacts artifacts: 'snyk-report.json', allowEmptyArchive: true
                                          discordSend(
                                             webhookURL: env.DISCORD_WEBHOOK,
                                             title: env.JOB_NAME,
                                             link: env.BUILD_URL,
-                                            description: "Snyk Test Failed: build ${env.BUILD_NUMBER}. Report: ${env.BUILD_URL}artifact/snyk-report.json",
                                             result: 'FAILURE'
                                         )
                                     }

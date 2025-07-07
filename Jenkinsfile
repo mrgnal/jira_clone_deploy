@@ -66,11 +66,11 @@ pipeline {
                                     )
                                     }catch(err){
                                         echo "Snyk error: ${err}"
-
                                          discordSend(
                                             webhookURL: env.DISCORD_WEBHOOK,
                                             title: env.JOB_NAME,
                                             link: env.BUILD_URL,
+                                            description: "Snyk Test Failed: build ${env.BUILD_NUMBER}.",
                                             result: 'FAILURE'
                                         )
                                     }

@@ -13,6 +13,18 @@ pipeline {
         APP_NAME = 'jira_clone'
     }
     stages {
+        stage('Discord notify') {
+            steps {
+                discordSend(
+                    webhookURL: env.DISCORD_WEBHOOK,
+                    title: env.JOB_NAME,
+                    link: env.BUILD_URL,
+                    description: "Pipeline Started: build ${env.BUILD_NUMBER}",
+                    result: 'ABORTED'
+                )
+            }
+        }
+
         stage('SCM') {
             steps {
                 checkout scm
@@ -45,11 +57,25 @@ pipeline {
                         }
                         stage('Snyk test') {
                             steps {
-                                snykSecurity(
-                                    snykInstallation: 'snyk',
-                                    snykTokenId: 'snyk',
-                                    failOnIssues: false
-                                )
+                                script{
+                                    try{
+                                    snykSecurity(
+                                        snykInstallation: 'snyk',
+                                        snykTokenId: 'snyk',
+                                        // failOnIssues: false
+                                    )
+                                    }catch(err){
+                                        echo "Snyk error: ${err}"
+                                         discordSend(
+                                            webhookURL: env.DISCORD_WEBHOOK,
+                                            title: env.JOB_NAME,
+                                            link: env.BUILD_URL,
+                                            description: "Snyk Test Failed: build ${env.BUILD_NUMBER}",
+                                            result: 'FAILURE'
+                                        )
+                                    }
+                                }
+
                             }
                         }
                     }
@@ -99,9 +125,35 @@ pipeline {
         }
         success {
             echo 'Pipeline finished successfully'
+            discordSend(
+                webhookURL: env.DISCORD_WEBHOOK,
+                title: env.JOB_NAME,
+                link: env.BUILD_URL,
+                description: "Pipeline success: build ${env.BUILD_NUMBER}",
+                result: 'SUCCESS',
+                showChangeset: true
+            )
         }
         failure {
             echo 'Pipeline failed'
+            discordSend(
+                webhookURL: env.DISCORD_WEBHOOK,
+                title: env.JOB_NAME,
+                link: env.BUILD_URL,
+                description: "Pipeline failed: build ${env.BUILD_NUMBER}",
+                result: 'FAILURE',
+                showChangeset: true
+            )
+        }
+        aborted {
+            echo 'Pipeline aborted'
+            discordSend(
+                webhookURL: env.DISCORD_WEBHOOK,
+                title: env.JOB_NAME,
+                link: env.BUILD_URL,
+                description: "Pipeline Aborted: build ${env.BUILD_NUMBER}",
+                result: 'ABORTED'
+            )
         }
     }
 }

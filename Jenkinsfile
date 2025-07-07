@@ -19,7 +19,7 @@ pipeline {
                     webhookURL: env.DISCORD_WEBHOOK,
                     title: env.JOB_NAME,
                     link: env.BUILD_URL,
-                    description: "Pipeline Started: build ${env.BUILD_NUMBER}",
+                    description: "Pipeline started: build ${env.BUILD_NUMBER}",
                     result: 'ABORTED'
                 )
             }
@@ -66,11 +66,13 @@ pipeline {
                                     )
                                     }catch(err){
                                         echo "Snyk error: ${err}"
+
+                                        archiveArtifacts artifacts: 'snyk-report.json', allowEmptyArchive: true
                                          discordSend(
                                             webhookURL: env.DISCORD_WEBHOOK,
                                             title: env.JOB_NAME,
                                             link: env.BUILD_URL,
-                                            description: "Snyk Test Failed: build ${env.BUILD_NUMBER}",
+                                            description: "Snyk Test Failed: build ${env.BUILD_NUMBER}. Report: ${env.BUILD_URL}artifact/snyk-report.json",
                                             result: 'FAILURE'
                                         )
                                     }
@@ -101,7 +103,7 @@ pipeline {
                     image = docker.build("${env.APP_NAME}:${env.GIT_HASH}")
                     image.tag('latest')
                     image.tag(env.GIT_HASH)
-                    image.tag("${env.NODE_ENV}-${env.BUILD_NUMBER}")
+                    image.tag("Build-${env.BUILD_NUMBER}")
                     image.tag(env.DATE)
                 }
             }
@@ -151,7 +153,7 @@ pipeline {
                 webhookURL: env.DISCORD_WEBHOOK,
                 title: env.JOB_NAME,
                 link: env.BUILD_URL,
-                description: "Pipeline Aborted: build ${env.BUILD_NUMBER}",
+                description: "Pipeline aborted: build ${env.BUILD_NUMBER}",
                 result: 'ABORTED'
             )
         }

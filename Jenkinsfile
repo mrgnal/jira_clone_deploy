@@ -25,11 +25,6 @@ pipeline {
             }
         }
 
-        stage('SCM') {
-            steps {
-                checkout scm
-            }
-        }
         stage('Setting dependencies') {
             steps {
                 sh 'npm install'
@@ -66,11 +61,11 @@ pipeline {
                                     )
                                     }catch(err){
                                         echo "Snyk error: ${err}"
-
                                          discordSend(
                                             webhookURL: env.DISCORD_WEBHOOK,
                                             title: env.JOB_NAME,
                                             link: env.BUILD_URL,
+                                            description: "Snyk Test Failed: build ${env.BUILD_NUMBER}.",
                                             result: 'FAILURE'
                                         )
                                     }
@@ -112,7 +107,7 @@ pipeline {
                     docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
                         image.push(env.GIT_HASH)
                         image.push('latest')
-                        image.push("${env.NODE_ENV}-${env.BUILD_NUMBER}")
+                        image.push("Build-${env.BUILD_NUMBER}")
                         image.push(env.DATE)
                     }
                 }

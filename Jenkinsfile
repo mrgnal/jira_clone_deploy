@@ -25,11 +25,6 @@ pipeline {
             }
         }
 
-        stage('SCM') {
-            steps {
-                checkout scm
-            }
-        }
         stage('Setting dependencies') {
             steps {
                 sh 'npm install'

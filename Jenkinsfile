@@ -112,7 +112,7 @@ pipeline {
                     docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
                         image.push(env.GIT_HASH)
                         image.push('latest')
-                        image.push("${env.NODE_ENV}-${env.BUILD_NUMBER}")
+                        image.push("Build-${env.BUILD_NUMBER}")
                         image.push(env.DATE)
                     }
                 }

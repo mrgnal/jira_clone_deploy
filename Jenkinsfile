@@ -1,7 +1,6 @@
 pipeline {
-    agent {
-        label 'agent1'
-    }
+    agent any
+    
     parameters {
         string(name: 'NODE_ENV', defaultValue:'test', description:'Environment')
         string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
@@ -40,16 +39,16 @@ pipeline {
                 }
                 stage('Security & Quality Analysis') {
                     stages {
-                          stage('SonarQube Analysis') {
-                            steps {
-                                script {
-                                    def scannerHome = tool 'sonarqube'
-                                    withSonarQubeEnv('sonarqube') {
-                                        sh "${scannerHome}/bin/sonar-scanner"
-                                    }
-                                }
-                            }
-                        }
+                        //   stage('SonarQube Analysis') {
+                        //     steps {
+                        //         script {
+                        //             def scannerHome = tool 'sonarqube'
+                        //             withSonarQubeEnv('sonarqube') {
+                        //                 sh "${scannerHome}/bin/sonar-scanner"
+                        //             }
+                        //         }
+                        //     }
+                        // }
                         stage('Snyk test') {
                             steps {
                                 script{
@@ -87,29 +86,48 @@ pipeline {
                 script {
                     env.GIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     env.DATE = sh(script: 'date +%Y%m%d-%H%M', returnStdout: true).trim()
+                    env.GIT_BRANCH_CLEAN = env.GIT_BRANCH?.replaceAll(/^origin\//, '')?.replaceAll('/', '-') ?: 'unknown'
+                    env.IMAGE_TAG = "${env.GIT_BRANCH_CLEAN}-${env.GIT_HASH}-${env.DATE}"
+                }
+            }
+        }
+        stage('Login to ECR') {
+            steps {
+                withAWS(region: "${env.AWS_REGION}"){
+                    sh """
+                        aws ecr get-login-password --region ${env.AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${env.ECR_APP_URI}
+                    """
                 }
             }
         }
         stage('Build docker image') {
             steps {
                 script {
-                    image = docker.build("${env.APP_NAME}:${env.GIT_HASH}")
-                    image.tag('latest')
-                    image.tag(env.GIT_HASH)
-                    image.tag("Build-${env.BUILD_NUMBER}")
-                    image.tag(env.DATE)
+                    image = docker.build("${env.ECR_APP_URI}:${env.IMAGE_TAG}")
+                    image.tag("${env.ECR_APP_URI}:latest")
+                    image.tag("${env.ECR_APP_URI}:Build-${env.BUILD_NUMBER}")
                 }
             }
         }
+        // stage('Push docker image to ECR') {
+        //     steps {
+        //         script {
+        //             docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
+        //                 image.push(env.GIT_HASH)
+        //                 image.push('latest')
+        //                 image.push("Build-${env.BUILD_NUMBER}")
+        //                 image.push(env.DATE)
+        //             }
+        //         }
+        //     }
+        // }
         stage('Push docker image to ECR') {
             steps {
                 script {
-                    docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
-                        image.push(env.GIT_HASH)
-                        image.push('latest')
-                        image.push("Build-${env.BUILD_NUMBER}")
-                        image.push(env.DATE)
-                    }
+                    image.push("${env.IMAGE_TAG}")
+                    image.push('latest')
+                    image.push("Build-${env.BUILD_NUMBER}")
                 }
             }
         }

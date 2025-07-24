@@ -1,9 +1,9 @@
-FROM node:24.2.0-alpine3.21 AS base
+FROM public.ecr.aws/lambda/nodejs:22 AS base
 
-RUN apk add --no-cache openssl libressl 
+# RUN apk add --no-cache openssl libressl 
 
 FROM base AS deps
-WORKDIR /app
+WORKDIR ${LAMBDA_TASK_ROOT}
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
@@ -13,15 +13,18 @@ RUN \
   fi
 
 FROM base AS runner
-WORKDIR /app
+WORKDIR ${LAMBDA_TASK_ROOT}
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json ./package.json
+COPY --from=deps ${LAMBDA_TASK_ROOT}/node_modules ./node_modules
+COPY --from=deps ${LAMBDA_TASK_ROOT}/package.json ./package.json
 COPY prisma ./prisma
-COPY entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh
+# COPY entrypoint.sh /entrypoint.sh
+COPY lambda-handler.js ${LAMBDA_TASK_ROOT}
+
+# RUN chmod +x /entrypoint.sh
 
 RUN npx prisma generate
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+# ENTRYPOINT [ "/entrypoint.sh" ]
+CMD [ "lambda-handler.migrate" ]

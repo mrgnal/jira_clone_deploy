@@ -143,6 +143,7 @@ pipeline {
                                 image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG}", "-f Dockerfile.migrate .")
                                 image.tag("latest")
                                 image.tag("Build-${env.BUILD_NUMBER}")
+                                sh "echo ${env.MIGRATION_NAME}"
                             }
                         }
                     }

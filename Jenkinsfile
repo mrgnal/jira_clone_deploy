@@ -10,7 +10,7 @@ pipeline {
         SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
         AWS_CREDENTIALS_ID = 'jenkins-ecr-access'
         APP_NAME = 'jira_clone'
-        MIGRATION_IMAGE='jira_clone_migrate'
+        MIGRATION_IMAGE = 'jira_clone_migrate'
     }
     stages {
         stage('Discord notify') {
@@ -142,7 +142,7 @@ pipeline {
                     stage('Build migration docker image') {
                         steps {
                             script {
-                                image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG} -f Dockerfile.migrate")
+                                image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG}", "-f Dockerfile.migrate")
                                 image.tag("latest")
                                 image.tag("Build-${env.BUILD_NUMBER}")
                             }

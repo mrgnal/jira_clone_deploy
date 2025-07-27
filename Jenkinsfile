@@ -130,6 +130,11 @@ pipeline {
                         }
                     }
                 }
+                post {
+                    always {
+                        cleanWs()
+                    }
+                }
                 }
                 stage('Build & push migration image'){
                 agent { label 'docker' }
@@ -164,6 +169,11 @@ pipeline {
                         }
                     }
                 }
+                post {
+                    always {
+                        cleanWs()
+                    }
+                }
                 }
 
             }
@@ -171,9 +181,6 @@ pipeline {
         
     }
     post {
-        always {
-            cleanWs()
-        }
         success {
             echo 'Pipeline finished successfully'
             discordSend(

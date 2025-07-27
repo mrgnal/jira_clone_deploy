@@ -142,7 +142,7 @@ pipeline {
                     stage('Build migration docker image') {
                         steps {
                             script {
-                                image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG}", "-f Dockerfile.migrate")
+                                image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG}", "-f Dockerfile.migrate .")
                                 image.tag("latest")
                                 image.tag("Build-${env.BUILD_NUMBER}")
                             }

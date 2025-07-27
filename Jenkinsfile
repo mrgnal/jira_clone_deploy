@@ -2,7 +2,7 @@ pipeline {
     agent none
     
     parameters {
-        string(name: 'NODE_ENV', defaultValue:'test', description:'Environment')
+        string(name: 'NODE_ENV', defaultValue:'dev', description:'Environment')
         string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
     }
     environment {

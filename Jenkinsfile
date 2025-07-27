@@ -104,24 +104,12 @@ pipeline {
         stage('Build docker image') {
             steps {
                 script {
-                    image = docker.build("${env.ECR_APP_URI}:${env.IMAGE_TAG}")
-                    image.tag("${env.ECR_APP_URI}:latest")
-                    image.tag("${env.ECR_APP_URI}:Build-${env.BUILD_NUMBER}")
+                    image = docker.build("${env.ECR_APP_URI}/${env.APP_NAME}:${env.IMAGE_TAG}")
+                    image.tag("latest")
+                    image.tag("Build-${env.BUILD_NUMBER}")
                 }
             }
         }
-        // stage('Push docker image to ECR') {
-        //     steps {
-        //         script {
-        //             docker.withRegistry("https://${env.ECR_REPO}", "ecr:${env.AWS_REGION}:${env.AWS_CREDENTIALS_ID}") {
-        //                 image.push(env.GIT_HASH)
-        //                 image.push('latest')
-        //                 image.push("Build-${env.BUILD_NUMBER}")
-        //                 image.push(env.DATE)
-        //             }
-        //         }
-        //     }
-        // }
         stage('Push docker image to ECR') {
             steps {
                 script {

@@ -130,11 +130,6 @@ pipeline {
                         }
                     }
                 }
-                post {
-                    always {
-                        cleanWs()
-                    }
-                }
                 }
                 stage('Build & push migration image'){
                 agent { label 'docker' }
@@ -155,7 +150,6 @@ pipeline {
                                 image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG}", "-f Dockerfile.migrate .")
                                 image.tag("latest")
                                 image.tag("Build-${env.BUILD_NUMBER}")
-                                sh "echo ${env.MIGRATION_NAME}"
                             }
                         }
                     }
@@ -167,11 +161,6 @@ pipeline {
                                 image.push("Build-${env.BUILD_NUMBER}")
                             }
                         }
-                    }
-                }
-                post {
-                    always {
-                        cleanWs()
                     }
                 }
                 }

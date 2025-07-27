@@ -10,6 +10,7 @@ pipeline {
         SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
         AWS_CREDENTIALS_ID = 'jenkins-ecr-access'
         APP_NAME = 'jira_clone'
+        MIGRATION_IMAGE='jira_clone_migrate'
     }
     stages {
         stage('Discord notify') {
@@ -91,34 +92,74 @@ pipeline {
                 }
             }
         }
-        stage('Login to ECR') {
-            steps {
-                withAWS(region: "${env.AWS_REGION}"){
-                    sh """
-                        aws ecr get-login-password --region ${env.AWS_REGION} | \
-                        docker login --username AWS --password-stdin ${env.ECR_APP_URI}
-                    """
+        stage('Build & push images'){
+            parallel{
+                stage('Build & push app image'){
+                    stage('Login to ECR') {
+                    steps {
+                        withAWS(region: "${env.AWS_REGION}"){
+                            sh """
+                                aws ecr get-login-password --region ${env.AWS_REGION} | \
+                                docker login --username AWS --password-stdin ${env.ECR_APP_URI}
+                            """
+                        }
+                    }
+                }        
+                    stage('Build docker image') {
+                        steps {
+                            script {
+                                image = docker.build("${env.ECR_APP_URI}/${env.APP_NAME}:${env.IMAGE_TAG}")
+                                image.tag("latest")
+                                image.tag("Build-${env.BUILD_NUMBER}")
+                            }
+                        }
+                    }
+                    stage('Push docker image to ECR') {
+                        steps {
+                            script {
+                                image.push("${env.IMAGE_TAG}")
+                                image.push('latest')
+                                image.push("Build-${env.BUILD_NUMBER}")
+                            }
+                        }
+                    }
                 }
+                
+                stage('Build & push migration image'){
+                    agent { label 'docker' }
+                    stage('Login to ECR') {
+                    steps {
+                        withAWS(region: "${env.AWS_REGION}"){
+                            sh """
+                                aws ecr get-login-password --region ${env.AWS_REGION} | \
+                                docker login --username AWS --password-stdin ${env.ECR_APP_URI}
+                            """
+                        }
+                    }
+                }        
+                    stage('Build docker image') {
+                        steps {
+                            script {
+                                image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG} -f Dockerfile.migrate")
+                                image.tag("latest")
+                                image.tag("Build-${env.BUILD_NUMBER}")
+                            }
+                        }
+                    }
+                    stage('Push docker image to ECR') {
+                        steps {
+                            script {
+                                image.push("${env.IMAGE_TAG}")
+                                image.push('latest')
+                                image.push("Build-${env.BUILD_NUMBER}")
+                            }
+                        }
+                    }
+                }
+
             }
         }
-        stage('Build docker image') {
-            steps {
-                script {
-                    image = docker.build("${env.ECR_APP_URI}/${env.APP_NAME}:${env.IMAGE_TAG}")
-                    image.tag("latest")
-                    image.tag("Build-${env.BUILD_NUMBER}")
-                }
-            }
-        }
-        stage('Push docker image to ECR') {
-            steps {
-                script {
-                    image.push("${env.IMAGE_TAG}")
-                    image.push('latest')
-                    image.push("Build-${env.BUILD_NUMBER}")
-                }
-            }
-        }
+        
     }
     post {
         always {

@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
     
     parameters {
         string(name: 'NODE_ENV', defaultValue:'test', description:'Environment')
@@ -12,6 +12,7 @@ pipeline {
     }
     stages {
         stage('Discord notify') {
+            agent any
             steps {
                 discordSend(
                     webhookURL: env.DISCORD_WEBHOOK,
@@ -24,6 +25,7 @@ pipeline {
         }
 
         stage('Setting dependencies') {
+            agent { label 'ec2-agent' }
             steps {
                 sh 'npm install'
                 sh 'npm install ts-node typescript'
@@ -32,11 +34,13 @@ pipeline {
         stage('Code Analysis') {
             parallel {
                 stage('Lint') {
+                    agent { label 'ec2-agent' }
                     steps {
                         sh 'npm run lint'
                     }
                 }
                 stage('Security & Quality Analysis') {
+                    agent { label 'ec2-agent' }
                     stages {
                         //   stage('SonarQube Analysis') {
                         //     steps {
@@ -76,11 +80,13 @@ pipeline {
             }
         }
         stage('Test') {
+            agent { label 'ec2-agent' }
             steps {
                 sh 'npm run test'
             }
         }
         stage('Set tags') {
+            agent any
             steps {
                 script {
                     env.GIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
@@ -93,6 +99,7 @@ pipeline {
         stage('Build & push images'){
             parallel{
                 stage ('Build & push app'){
+                agent { label 'ec2-agent' }    
                 stages{
                     stage('Login to ECR') {
                     steps {

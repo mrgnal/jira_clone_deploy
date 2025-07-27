@@ -74,7 +74,7 @@ pipeline {
                 webhookURL: env.DISCORD_WEBHOOK,
                 title: env.JOB_NAME,
                 link: env.BUILD_URL,
-                description: "Pipeline failed: deploy №${env.BUILD_NUMBER}",
+                description: "Pipeline failed: deploy № ${env.BUILD_NUMBER}",
                 result: 'FAILURE',
                 showChangeset: true
             )
@@ -85,7 +85,7 @@ pipeline {
                 webhookURL: env.DISCORD_WEBHOOK,
                 title: env.JOB_NAME,
                 link: env.BUILD_URL,
-                description: "Pipeline aborted: deploy ${env.BUILD_NUMBER}",
+                description: "Pipeline aborted: deploy № ${env.BUILD_NUMBER}",
                 result: 'ABORTED'
             )
         }

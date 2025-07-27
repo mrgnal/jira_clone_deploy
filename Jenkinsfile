@@ -94,6 +94,7 @@ pipeline {
         }
         stage('Build & push images'){
             parallel{
+                stage ('Build & push app'){
                 stages{
                     stage('Login to ECR') {
                     steps {
@@ -124,9 +125,10 @@ pipeline {
                         }
                     }
                 }
-
+                }
+                stage('Build & push migration image'){
+                agent { label 'docker' }
                 stages {
-                    agent { label 'docker' }
                     stage('Login to ECR') {
                     steps {
                         withAWS(region: "${env.AWS_REGION}"){
@@ -155,6 +157,7 @@ pipeline {
                             }
                         }
                     }
+                }
                 }
 
             }

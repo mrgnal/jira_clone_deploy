@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
     
     parameters {
         string(name: 'NODE_ENV', defaultValue:'test', description:'Environment')
@@ -9,10 +9,10 @@ pipeline {
         NODE_ENV = "${params.NODE_ENV}"
         SKIP_ENV_VALIDATION = "${params.SKIP_ENV_VALIDATION}"
         AWS_CREDENTIALS_ID = 'jenkins-ecr-access'
-        APP_NAME = 'jira_clone'
     }
     stages {
         stage('Discord notify') {
+            agent any
             steps {
                 discordSend(
                     webhookURL: env.DISCORD_WEBHOOK,
@@ -25,6 +25,7 @@ pipeline {
         }
 
         stage('Setting dependencies') {
+            agent { label 'ec2-agent' }
             steps {
                 sh 'npm install'
                 sh 'npm install ts-node typescript'
@@ -33,11 +34,13 @@ pipeline {
         stage('Code Analysis') {
             parallel {
                 stage('Lint') {
+                    agent { label 'ec2-agent' }
                     steps {
                         sh 'npm run lint'
                     }
                 }
                 stage('Security & Quality Analysis') {
+                    agent { label 'ec2-agent' }
                     stages {
                         //   stage('SonarQube Analysis') {
                         //     steps {
@@ -77,11 +80,13 @@ pipeline {
             }
         }
         stage('Test') {
+            agent { label 'ec2-agent' }
             steps {
                 sh 'npm run test'
             }
         }
         stage('Set tags') {
+            agent any
             steps {
                 script {
                     env.GIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
@@ -91,39 +96,91 @@ pipeline {
                 }
             }
         }
-        stage('Login to ECR') {
-            steps {
-                withAWS(region: "${env.AWS_REGION}"){
-                    sh """
-                        aws ecr get-login-password --region ${env.AWS_REGION} | \
-                        docker login --username AWS --password-stdin ${env.ECR_APP_URI}
-                    """
+        stage('Build & push images'){
+            parallel{
+                stage ('Build & push app'){
+                agent { label 'ec2-agent' }    
+                stages{
+                    stage('Login to ECR') {
+                    steps {
+                        withAWS(region: "${env.AWS_REGION}"){
+                            sh """
+                                aws ecr get-login-password --region ${env.AWS_REGION} | \
+                                docker login --username AWS --password-stdin ${env.ECR_APP_URI}
+                            """
+                        }
+                    }
+                }        
+                    stage('Build app docker image') {
+                        steps {
+                            script {
+                                image = docker.build("${env.ECR_APP_URI}/${env.APP_NAME}:${env.IMAGE_TAG}")
+                                image.tag("latest")
+                                image.tag("Build-${env.BUILD_NUMBER}")
+                            }
+                        }
+                    }
+                    stage('Push docker image to ECR') {
+                        steps {
+                            script {
+                                image.push("${env.IMAGE_TAG}")
+                                image.push('latest')
+                                image.push("Build-${env.BUILD_NUMBER}")
+                            }
+                        }
+                    }
                 }
+                post {
+                    always {
+                        cleanWs()
+                    }
+                }
+                }
+                stage('Build & push migration image'){
+                agent { label 'docker' }
+                stages {
+                    stage('Login to ECR') {
+                    steps {
+                        withAWS(region: "${env.AWS_REGION}"){
+                            sh """
+                                aws ecr get-login-password --region ${env.AWS_REGION} | \
+                                docker login --username AWS --password-stdin ${env.ECR_APP_URI}
+                            """
+                        }
+                    }
+                }        
+                    stage('Build migration docker image') {
+                        steps {
+                            script {
+                                image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG}", "-f Dockerfile.migrate .")
+                                image.tag("latest")
+                                image.tag("Build-${env.BUILD_NUMBER}")
+                                sh "echo ${env.MIGRATION_NAME}"
+                            }
+                        }
+                    }
+                    stage('Push docker image to ECR') {
+                        steps {
+                            script {
+                                image.push("${env.IMAGE_TAG}")
+                                image.push('latest')
+                                image.push("Build-${env.BUILD_NUMBER}")
+                            }
+                        }
+                    }
+                }
+                post {
+                    always {
+                        cleanWs()
+                    }
+                }
+                }
+
             }
         }
-        stage('Build docker image') {
-            steps {
-                script {
-                    image = docker.build("${env.ECR_APP_URI}/${env.APP_NAME}:${env.IMAGE_TAG}")
-                    image.tag("latest")
-                    image.tag("Build-${env.BUILD_NUMBER}")
-                }
-            }
-        }
-        stage('Push docker image to ECR') {
-            steps {
-                script {
-                    image.push("${env.IMAGE_TAG}")
-                    image.push('latest')
-                    image.push("Build-${env.BUILD_NUMBER}")
-                }
-            }
-        }
+        
     }
     post {
-        always {
-            cleanWs()
-        }
         success {
             echo 'Pipeline finished successfully'
             discordSend(

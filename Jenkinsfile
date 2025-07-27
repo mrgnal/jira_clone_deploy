@@ -94,7 +94,7 @@ pipeline {
         }
         stage('Build & push images'){
             parallel{
-                stage('Build & push app image'){
+                stages{
                     stage('Login to ECR') {
                     steps {
                         withAWS(region: "${env.AWS_REGION}"){
@@ -105,7 +105,7 @@ pipeline {
                         }
                     }
                 }        
-                    stage('Build docker image') {
+                    stage('Build app docker image') {
                         steps {
                             script {
                                 image = docker.build("${env.ECR_APP_URI}/${env.APP_NAME}:${env.IMAGE_TAG}")
@@ -124,8 +124,8 @@ pipeline {
                         }
                     }
                 }
-                
-                stage('Build & push migration image'){
+
+                stages {
                     agent { label 'docker' }
                     stage('Login to ECR') {
                     steps {
@@ -137,7 +137,7 @@ pipeline {
                         }
                     }
                 }        
-                    stage('Build docker image') {
+                    stage('Build migration docker image') {
                         steps {
                             script {
                                 image = docker.build("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${env.IMAGE_TAG} -f Dockerfile.migrate")

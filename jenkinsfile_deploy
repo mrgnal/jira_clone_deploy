@@ -1,0 +1,93 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'IMAGE_TAG', description:'Tag of the image for deploy')
+    }
+    environment {
+        IMAGE_TAG = "${params.IMAGE_TAG}"
+        APP_NAME = 'jira_clone'
+    }
+    stages {
+        stage('Discord notify') {
+            steps {
+                discordSend(
+                    webhookURL: env.DISCORD_WEBHOOK,
+                    title: env.JOB_NAME,
+                    link: env.BUILD_URL,
+                    description: "Pipeline started: build ${env.BUILD_NUMBER}",
+                    result: 'ABORTED'
+                )
+            }
+        }
+        stage('Login to ECR') {
+            steps {
+                withAWS(region: "${env.AWS_REGION}"){
+                    sh """
+                        aws ecr get-login-password --region ${env.AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${env.ECR_APP_URI}
+                    """
+                }
+            }
+        }
+        stage("Tag & push prod image"){
+            steps{
+                script{
+                    def image = docker.image("${env.ECR_APP_URI}/${env.APP_NAME}:${IMAGE_TAG}")
+                    image.pull()
+                    image.push("production")
+                }
+            }
+        }
+        stage("Update cluster"){
+            steps {
+                withAWS(region: "${env.AWS_REGION}") {
+                    sh """
+                        aws ecs update-service \
+                            --cluster ${env.CLUSTER_NAME} \
+                            --service ${env.SERVICE_NAME} \
+                            --force-new-deployment
+                    """
+                }
+            }
+        }
+
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline finished successfully'
+            discordSend(
+                webhookURL: env.DISCORD_WEBHOOK,
+                title: env.JOB_NAME,
+                link: env.BUILD_URL,
+                description: "Pipeline success: image deployed to ECS.\n№${env.BUILD_NUMBER}",
+                result: 'SUCCESS',
+                showChangeset: true
+            )
+        }
+        failure {
+            echo 'Pipeline failed'
+            discordSend(
+                webhookURL: env.DISCORD_WEBHOOK,
+                title: env.JOB_NAME,
+                link: env.BUILD_URL,
+                description: "Pipeline failed: deploy №${env.BUILD_NUMBER}",
+                result: 'FAILURE',
+                showChangeset: true
+            )
+        }
+        aborted {
+            echo 'Pipeline aborted'
+            discordSend(
+                webhookURL: env.DISCORD_WEBHOOK,
+                title: env.JOB_NAME,
+                link: env.BUILD_URL,
+                description: "Pipeline aborted: deploy ${env.BUILD_NUMBER}",
+                result: 'ABORTED'
+            )
+        }
+    }
+}

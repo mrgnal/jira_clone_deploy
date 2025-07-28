@@ -2,8 +2,9 @@ pipeline {
     agent any
     
     parameters {
-        string(name: 'NODE_ENV', defaultValue:'dev', description:'Environment')
+        string(name: 'NODE_ENV', defaultValue:'test', description:'Environment')
         string(name: 'SKIP_ENV_VALIDATION', defaultValue:'true', description:'Skip validation .env file')
+        booleanParam(name: 'BUILD_MIGRATION_IMAGE', defaultValue: true, description: 'Build migration image or not')
     }
     environment {
         NODE_ENV = "${params.NODE_ENV}"
@@ -24,6 +25,9 @@ pipeline {
         }
 
         stage('Setting dependencies') {
+            when {
+                expression { return params.NODE_ENV != 'production' }
+            }
             steps {
                 sh 'npm install'
                 sh 'npm install ts-node typescript'
@@ -125,6 +129,9 @@ pipeline {
                 }
                 }
                 stage('Build & push migration image'){
+                when {
+                    expression { return params.BUILD_MIGRATION_IMAGE == true }
+                }
                 stages {
                     stage('Login to ECR') {
                     steps {

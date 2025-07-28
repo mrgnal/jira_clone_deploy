@@ -2,11 +2,12 @@ pipeline {
     agent any
     
     parameters {
-        string(name: 'IMAGE_TAG', description:'Tag of the image for deploy')
+        string(name: 'APP_IMAGE_TAG', description:'Tag of the app image for deploy')        
+        string(name: 'MIGRATION_IMAGE_TAG', description:'Tag of the migration image for deploy')
     }
     environment {
-        IMAGE_TAG = "${params.IMAGE_TAG}"
-        APP_NAME = 'jira_clone'
+        APP_IMAGE_TAG = "${params.APP_IMAGE_TAG}"
+        MIGRATION_IMAGE_TAG = "${params.MIGRATION_IMAGE_TAG}"
     }
     stages {
         stage('Discord notify') {
@@ -30,10 +31,19 @@ pipeline {
                 }
             }
         }
-        stage("Tag & push prod image"){
+        stage("Tag & push prod app image"){
             steps{
                 script{
-                    def image = docker.image("${env.ECR_APP_URI}/${env.APP_NAME}:${IMAGE_TAG}")
+                    def image = docker.image("${env.ECR_APP_URI}/${env.APP_NAME}:${APP_IMAGE_TAG}")
+                    image.pull()
+                    image.push("production")
+                }
+            }
+        }
+        stage("Tag & push prod migration image"){
+            steps{
+                script{
+                    def image = docker.image("${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${MIGRATION_IMAGE_TAG}")
                     image.pull()
                     image.push("production")
                 }

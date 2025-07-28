@@ -44,7 +44,7 @@ pipeline {
                     sh """
                         aws lambda update-function-code \
                             --function-name ${env.LAMBDA_FUNCTION_NAME} \
-                            --image-uri ${env.ECR_APP_URI}/${env.MIGRATION_NAME}:${IMAGE_TAG}
+                            --image-uri ${env.ECR_APP_URI}/${env.MIGRATION_NAME}:production
                     """
                 }
             }

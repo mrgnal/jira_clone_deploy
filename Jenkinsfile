@@ -42,16 +42,16 @@ pipeline {
                 }
                 stage('Security & Quality Analysis') {
                     stages {
-                        //   stage('SonarQube Analysis') {
-                        //     steps {
-                        //         script {
-                        //             def scannerHome = tool 'sonarqube'
-                        //             withSonarQubeEnv('sonarqube') {
-                        //                 sh "${scannerHome}/bin/sonar-scanner"
-                        //             }
-                        //         }
-                        //     }
-                        // }
+                          stage('SonarQube Analysis') {
+                            steps {
+                                script{
+                                def scannerHome = tool 'SonarQube Cloud';
+                                withSonarQubeEnv() {
+                                    sh "${scannerHome}/bin/sonar-scanner"
+                                }
+                            }
+                            }
+                        }
                         stage('Snyk test') {
                             steps {
                                 script{

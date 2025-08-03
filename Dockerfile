@@ -47,6 +47,11 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV OTEL_SERVICE_NAME='jiraclone'
+ENV OTEL_EXPORTER_OTLP_ENDPOINT='http://localhost:4318'
+ENV SPLUNK_METRICS_ENABLED='true'
+ENV SPLUNK_AUTOMATIC_LOG_COLLECTION='true'
+
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

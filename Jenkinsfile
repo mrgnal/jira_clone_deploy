@@ -49,10 +49,19 @@ pipeline {
                                 withSonarQubeEnv() {
                                     sh "${scannerHome}/bin/sonar-scanner"
                                 }
-                                }
-                                timeout(time: 1, unit: 'HOURS') {
-                                waitForQualityGate abortPipeline: true
                             }
+                        }
+                        stage("Delay before Quality Gate") {
+                            steps {
+                                echo "Sleeping to allow SonarCloud to complete background task"
+                                sleep time: 30, unit: 'SECONDS'
+                            }
+                        }
+                        stage("Quality Gate") {
+                            steps {
+                                timeout(time: 5, unit: 'MINUTES') {
+                                    waitForQualityGate abortPipeline: true
+                                }
                             }
                         }
                         stage('Snyk test') {

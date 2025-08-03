@@ -67,4 +67,4 @@ ENV PORT=3000
 
 # Start server
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "-r", "@splunk/otel/instrument", "server.js"]
+CMD ["node", "server.js"]

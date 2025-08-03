@@ -35,11 +35,11 @@ pipeline {
         }
         stage('Code Analysis') {
             parallel {
-                // stage('Lint') {
-                //     steps {
-                //         sh 'npm run lint'
-                //     }
-                // }
+                stage('Lint') {
+                    steps {
+                        sh 'npm run lint'
+                    }
+                }
                 stage('Security & Quality Analysis') {
                     stages {
                           stage('SonarQube Analysis') {

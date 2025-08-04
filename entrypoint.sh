@@ -1,9 +1,5 @@
 #!/bin/sh
 
-set -e
+otelcol --config=/etc/otel/config.yaml &
 
-npx prisma migrate deploy
-
-npx prisma db seed
-
-exit 0
+exec node /app/server.js >> /tmp/app.log 2>&1

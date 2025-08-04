@@ -1,8 +1,6 @@
 # syntax=docker.io/docker/dockerfile:1
 
-# FROM node:24.2.0-alpine3.21 AS base
 FROM node:18-alpine AS base
-# FROM node:latest AS base
 
 RUN apk add --no-cache openssl libressl
 
@@ -59,6 +57,20 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+COPY otel.yml /etc/otel/config.yaml
+
+RUN apk add --no-cache curl tar && \
+    curl -L https://github.com/signalfx/splunk-otel-collector/releases/download/v0.130.0/splunk-otel-collector_0.130.0_amd64.tar.gz -o /tmp/otelcol.tar.gz && \
+    mkdir -p /tmp/otelcol-dir && \
+    tar -xzf /tmp/otelcol.tar.gz -C /tmp/otelcol-dir && \
+    mv /tmp/otelcol-dir/splunk-otel-collector/bin/otelcol /usr/local/bin/otelcol && \
+    chmod +x /usr/local/bin/otelcol && \
+    rm -rf /tmp/otelcol* 
+
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
 USER nextjs
 
 EXPOSE 3000
@@ -67,4 +79,5 @@ ENV PORT=3000
 
 # Start server
 ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+# CMD ["node", "server.js"]
+ENTRYPOINT [ "/entrypoint.sh" ]

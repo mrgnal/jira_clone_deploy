@@ -14,10 +14,10 @@ receivers:
   filelog:
     include: [ /tmp/app.log ]
     start_at: beginning
-    # operators:
-    #   - type: regex_parser
-    #     regex: '^(?P<message>.*)$'
-    #     parse_to: body
+    operators:
+      - type: regex_parser
+        regex: '^(?P<message>.*)$'
+        parse_to: body
 
 processors:
   batch:

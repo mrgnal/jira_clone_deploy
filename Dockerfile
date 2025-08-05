@@ -80,4 +80,4 @@ ENV PORT=3000
 # Start server
 ENV HOSTNAME="0.0.0.0"
 # CMD ["node", "server.js"]
-ENTRYPOINT [ "/entrypoint.sh" ]
+CMD [ "/entrypoint.sh" ]
